@@ -1,0 +1,17 @@
+import java.io.Serializable;
+
+option InternalField implements AttributeConcept {
+	realize singleton(Field field), accessSpecifier(spec) with
+		field == [?transient `spec `attrType `attrName] &&
+		hasField(targetType, field) &&
+		(isAssignableFrom(Serializable, targetType) <=> isTransient(field))
+	catch error("The class %s must have a field named '%s'", targetType, attrName);
+
+	realize attrGet(getExpr, targetExpr) with
+		getExpr == [`targetExpr.`field];
+
+	realize attrSet(setExpr, targetExpr, valExpr) with
+		setExpr == [`targetExpr.`field = `valExpr]
+	require isSimpleAssignment(setExpr)
+	catch error("Compound assignment is not yet supported");
+}

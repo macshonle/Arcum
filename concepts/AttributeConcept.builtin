@@ -1,0 +1,27 @@
+interface AttributeConcept {
+	singleton parameters(Class targetType, Type attrType, String attrName)
+	require
+		isJavaIdentifier(attrName) && isReferenceType(attrType)
+	catch
+		error("The name '%s' must be a valid Java identifier and the attribute"
+			+ " type cannot be a primitive type", attrName);
+
+	singleton accessSpecifier(AccessSpecifier spec);
+
+	attrGet(Expr getExpr, Expr targetExpr)
+	require
+		isAssignableFrom(attrType, TypeOf(getExpr)) &&
+		isAssignableFrom(targetType, TypeOf(targetExpr)) &&
+		isSubExpression(getExpr)
+	catch
+		error("The target must be a %s and the value must be used", targetType);
+
+	attrSet(Expr setExpr, Expr targetExpr, Expr valExpr)
+	require
+		!isSubExpression(setExpr) &&
+		isAssignableFrom(targetType, TypeOf(targetExpr)) &&
+		isAssignableFrom(attrType, TypeOf(valExpr))
+	catch
+		error("The target must be a %s, the new value a %s, and the result of"
+			+ " the set operation cannot be used as a value", targetType, attrType);
+}

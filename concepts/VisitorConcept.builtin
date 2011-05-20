@@ -1,0 +1,86 @@
+// Types for "destinations" are exact. Thus, if you want to visit a certain
+// type and all subtypes of it, you will need to specify "Foo+" in the pointcut
+option interface VisitorConcept {
+	singleton parameters(
+		String traversalName,
+		Type rootType,
+		ordered targetType(Type type),
+		ordered viaEdge(Field field)	default isField(field),
+		ordered bypassEdge(Field field)	default false,
+		sourceScope(Package pack)		default onBuildPath(pack));
+		
+		// TODO: Add in cycle risk version of code that checks only when it is
+		// a potential back edge
+/*
+	visit(Expr expr, Expr target, Expr visitor)
+	require
+		isAssignableFrom(rootType, TypeOf(target)) &&
+		forAll (Type type) {
+			targetType(type) =>
+			exists (Method m) {
+				hasMethod(TypeOf(visitor), m) &&
+				SignatureOf(m) == [public void visit(`type)]
+			}
+			catch error("The visitor must have a method for visiting %s instances",
+				target)
+		}
+		catch quickFix("Insert required methods");
+
+	realize classGraph(Type fromType, Type toType, Field edge) with
+		(fromType == rootType || classGraph(_, fromType, _) &&
+		hasField(fromType, edge) && validEdge(edge);
+
+	realize traversalEdge(Field edge) with
+		classGraph(edge) &&
+		(targetType(TypeOf(edge)) || traversalEdge());
+
+	realize validEdge(Field edge) with
+		!bypassEdge(edge) && viaEdge(edge) &&
+		TypeOf(edge) == (toType || [`toType[]]);
+		// Also n-dimensional arrays, perhaps:
+		//   isArray(TypeOf(edge)) && hasBaseType(TypeOf(edge), toType)
+		// If we are to use Collection+ and Map+ (e.g. map and all subclasses)
+		// then the reflective version will have to have type tokens present
+		// in order to determine what can be traversed. Checks can be made to
+		// verify the presence of these tokens.
+}
+
+// A Name is like a String, but is a valid identifier and could be qualified
+// with a package name prefix
+option VisitorPattern implements VisitorConcept {
+	singleton parameters(Name interfaceName);
+	
+	realize singleton(Interface visitorIntf) with
+		visitorIntf == [interface `interfaceName {}];
+		// all methods needed; but in the precense of mutliple visitors on
+		// a similar structure an adaptor should be used?
+
+	// all method infrastructure needed
+
+	realize visit(Expr expr, Expr target, Expr visitor) with
+		expr == [`target.accept(`visitor)];
+}
+
+option DJLibrary implements VisitorConcept {
+	singleton parameters(
+		Type strategyNamespace default rootType);
+
+	realize singleton(Field strategy, Expr initExpr) with
+		strategy == [public static final Stragegy `traversalName = `initExpr]
+		&& initExpr == [Strategy.from(`root).to(`targetType)`{.via(`)}`{.bypassing()}]
+		&& hasField(strategyNamespace, strategy);
+
+	realize visit(Expr expr, Expr target, Expr visitor) with
+		expr == [`strategy.traverse(`target, `visitor)];
+
+	method String strategyString(String root, Type[] types)
+	{
+		result = "from " + root + " to ";
+		for (i=0; i<types.length; ++i) {
+			result += types[i];
+			if (i < types.length - 1)
+				result += ", ";
+		}
+		return result.toString();
+	}*/
+}

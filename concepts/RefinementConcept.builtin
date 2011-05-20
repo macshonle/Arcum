@@ -1,0 +1,38 @@
+/*
+concept RefinementConcept {
+	singleton trait parameters(Class baseType, Class refinementType);
+	
+	trait publicMethod(Method method):
+		hasMethod(baseType, method) && isPublic(method);
+
+	trait refinement(Method method, Set<Expr> superCallabstract trait(Expr superCall)):
+		hasMethod(refinementType, method) && isPublic(method) &&
+		exists (Method m) {
+			publicMethod(m) && (SignatureOf(m) == SignatureOf(method))
+		};
+}
+
+concept DecoratoingRefinement implements RefinementConcept {
+	singleton trait parameters(Name intfName, Name decoratorName);
+	
+	singleton trait(Interface decoratorIntf):
+		decoratorIntf == [interface `intfName {}] &&
+		forAll (Method m) {
+			publicMethod(m) => hasSignature(decoratorIntf, SignatureOf(m))
+		};
+
+	singleton trait(Class decoratorClass, Field component):
+		[class `decoratorName implements `decoratorIntf {
+			`component }] == decoratorClass &&
+		component == [private `baseType instance] &&
+		forAll (Method m) {
+			publicMethod(m) =>
+			exists (Method impl) {
+				let Signature sig = SignatureOf(m)
+				hasMethod(decoratorClass, impl) &&
+				if (TypeOf(sig) == void) {
+					impl == [`sig { return `component }]
+				}
+			}
+		};
+}*/

@@ -1,0 +1,42 @@
+import java.util.Map;
+import java.util.IdentityHashMap;
+
+option StaticMap implements AttributeConcept {
+	realize singleton(Field mapField, Type mapType, Expr mapInit),
+			accessSpecifier(spec) with
+		mapType == [Map<`targetType, `attrType>] &&
+		mapInit == [new IdentityHashMap<`targetType, `attrType>()] &&
+		mapField == [static `spec `mapType `attrName = `mapInit] &&
+		hasField(targetType, mapField)
+	catch error("The class %s must have a map named '%s'", targetType, attrName);
+
+	realize attrGet(getExpr, targetExpr) with
+		getExpr == [`targetType.`mapField.get(`targetExpr)];
+
+	realize attrSet(setExpr, targetExpr, valExpr) with
+		setExpr == [`targetType.`mapField.put(`targetExpr, `valExpr)];
+
+/*
+// TRY: which could have issues with matching a put in two ways (the target alone
+// and the entire put expression)
+realize static anyAccess(Expr access) with
+	access = ([`targetType.`mapField]
+		|| [`targetType.`mapField.put(`_, `_)]
+		|| [`targetType.`mapField.get(`_)])
+require attrGet(access, _) || attrSet(access, _);
+*/
+
+	realize static properAccess(Expr use, Expr reference) with
+		use == ([`reference.put(`_, `_)] || [`reference.get(`_)]) &&
+		reference == [`targetType.`mapField];
+
+	realize static allAccesses(Expr reference) with
+		reference == [`targetType.`mapField]
+	require properAccess(_, reference)
+	catch error("Map \"%s\" can only be used for direct get/put calls", attrName);
+	
+	realize static nonInitializationAssignment(Expr fieldSet) with
+		fieldSet == [`targetType.`mapField = `_]
+	require false
+	catch error("Map \"%s\" cannot be reassigned", attrName);
+}

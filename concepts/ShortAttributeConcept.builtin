@@ -1,0 +1,41 @@
+import java.io.Serializable;
+import java.io.ObjectOutputStream;
+import java.io.ObjectInputStream;
+import java.util.Map;
+import java.util.IdentityHashMap;
+
+interface AttributeConcept2 {
+	singleton parameters(Class targetType, Type attrType, String attrName);
+	singleton accessSpecifier(AccessSpecifier spec);
+	attrGet(Expr getExpr, Expr targetExpr);
+	attrSet(Expr setExpr, Expr targetExpr, Expr valExpr);
+}
+
+option InternalField2 implements AttributeConcept2 {
+	realize singleton(Field field), accessSpecifier(spec) with
+		field == [?transient `spec `attrType `attrName] &&
+		hasField(targetType, field) &&
+		(isAssignableFrom(Serializable, targetType) <=> isTransient(field));
+
+	realize attrGet(getExpr, targetExpr) with
+		getExpr == [`targetExpr.`field];
+
+	realize attrSet(setExpr, targetExpr, valExpr) with
+		setExpr == [`targetExpr.`field = `valExpr];
+}
+
+option StaticMap2 implements AttributeConcept2 {
+	realize singleton(Field mapField, Type mapType, Expr mapInit),
+		accessSpecifier(spec)
+	with
+		mapType == [Map<`targetType, `attrType>] &&
+		mapInit == [new IdentityHashMap<`targetType, `attrType>()] &&
+		mapField == [static `spec `mapType `attrName = `mapInit] &&
+		hasField(targetType, mapField);
+
+	realize attrGet(getExpr, targetExpr) with
+		getExpr == [`targetType.`mapField.get(`targetExpr)];
+
+	realize attrSet(setExpr, targetExpr, valExpr) with
+		setExpr == [`targetType.`mapField.put(`targetExpr, `valExpr)];
+}

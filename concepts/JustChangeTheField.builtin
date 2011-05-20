@@ -1,0 +1,41 @@
+import java.io.Serializable;
+
+interface JustChangeTheFieldConcept {
+	singleton parameters(Class targetType, Type attrType, String attrName)
+	require isJavaIdentifier(attrName) && isReferenceType(attrType);
+	
+	singleton accessSpecifier(AccessSpecifier spec);
+}
+
+option OneTest implements JustChangeTheFieldConcept {
+	realize singleton(Field field), accessSpecifier(spec) with
+		field == [?transient `spec `attrType `attrName] &&
+		hasField(targetType, field) &&
+		(isAssignableFrom(Serializable, targetType) <=> isTransient(field))
+	catch
+		error("The class %s must have a field named '%s'", targetType, attrName);
+}
+
+option StaticFieldTest1 implements JustChangeTheFieldConcept {
+	realize singleton(Field mapField, Type mapType, Expr mapInit),
+			accessSpecifier(spec) with
+		mapType == [Map<`targetType, `attrType>] &&
+		mapInit == [new IdentityHashMap<`targetType, `attrType>()] &&
+		mapField == [static `spec `mapType `attrName = `mapInit] &&
+		hasField(targetType, mapField)
+	catch error("The class %s must have a map named '%s'", targetType, attrName);
+}
+
+option StaticFieldTest2 implements JustChangeTheFieldConcept {
+	realize singleton(Field mapField), accessSpecifier(spec) with
+		mapField ==
+		[static `spec Map<`targetType, `attrType> `attrName
+			= new IdentityHashMap<`targetType, `attrType>()] &&
+		hasField(targetType, mapField)
+	catch error("The class %s must have a map named '%s'", targetType, attrName);
+}
+
+option NoField implements JustChangeTheFieldConcept {
+	realize accessSpecifier(spec) with
+		spec == [private];
+}

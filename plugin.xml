@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+  <!--////////////////-->
+  <!-- Project nature -->
+  <!--////////////////-->
+  <extension
+    point="org.eclipse.core.resources.natures"
+    id="arcumNature"
+    name="Arcum Concept Framework">
+    <runtime>
+       <run class="edu.ucsd.arcum.natures.ArcumNature"/>
+     </runtime>
+     <requires-nature id="org.eclipse.jdt.core.javanature"/>
+    <builder id="edu.ucsd.arcum.arcumBuilder"/>
+  </extension>
+
+  <extension point="org.eclipse.ui.ide.projectNatureImages">
+    <image 
+      id="edu.ucsd.arcum.arcumNatureImage"
+      natureId="edu.ucsd.arcum.arcumNature"
+      icon="icons/arcum_nature_ovr.gif"/>
+  </extension>
+
+  <!-- Project nature popup menu items -->
+  <extension point="org.eclipse.ui.popupMenus">
+    <objectContribution
+      objectClass="org.eclipse.core.resources.IProject"
+      adaptable="true"
+      id="iprojectcontributions">
+      <menu id="edu.ucsd.arcum.menu" label="Arcum Tools">
+        <separator name="group0"/>
+      </menu>
+      <visibility>
+        <and>
+          <objectState name="open" value="true"/>
+          <objectState name="nature" value="org.eclipse.jdt.core.javanature"/>
+          <not>
+            <objectState name="nature" value="edu.ucsd.arcum.arcumNature"/>
+          </not>
+        </and>
+      </visibility>
+      <action
+        label="Convert to Arcum Project"
+        class="edu.ucsd.arcum.ui.actions.AddArcumNatureAction"
+        menubarPath="edu.ucsd.arcum.menu/group0"
+        id="addarcumnatureaction">
+      </action>
+    </objectContribution>
+    
+    <objectContribution
+      objectClass="org.eclipse.core.resources.IProject"
+      adaptable="true"
+      id="iprojectcontributions">
+      <menu id="edu.ucsd.arcum.menu" label="Arcum Tools">
+        <separator name="group0"/>
+      </menu>
+      <visibility>
+        <objectState name="nature" value="edu.ucsd.arcum.arcumNature"/>
+      </visibility>
+      <action
+        label="Remove Arcum Capability"
+        class="edu.ucsd.arcum.ui.actions.RemoveArcumNatureAction"
+        menubarPath="edu.ucsd.arcum.menu/group0"
+        id="removearcumnatureaction">
+      </action>
+    </objectContribution>
+  </extension>
+
+  <!--/////////-->
+  <!-- Builder -->
+  <!--/////////-->
+  <extension
+    point="org.eclipse.core.resources.builders"
+    id="arcumBuilder"
+    name="Arcum Builder">
+    <builder hasNature="true">
+      <run class="edu.ucsd.arcum.builders.ArcumBuilder">
+        <parameter name="optimize" value="true"/>
+        <parameter name="comment" value="Builder comment"/>
+      </run>
+    </builder>
+  </extension>
+
+  <!--//////////////////////////////-->
+  <!-- Arcum file extension: .arcum -->
+  <!--//////////////////////////////-->
+  <extension point="org.eclipse.core.runtime.contentTypes">
+    <content-type
+      id="arcumSource"
+      name="Arcum Source File"
+      base-type="org.eclipse.core.runtime.text"
+      file-extensions="arcum"/>
+  </extension>
+  
+  <!--//////////////////////////////////-->
+  <!-- Editor and icon for .arcum files -->
+  <!--//////////////////////////////////-->
+  <extension point="org.eclipse.ui.editors">
+    <editor
+      id="arcumEditor"
+      name="Arcum Editor"
+      extensions="arcum"
+      default="true"
+      icon="icons/arcum_nature_ovr.gif"
+      class="edu.ucsd.arcum.ui.editor.ArcumEditorPart"
+      contributorClass="edu.ucsd.arcum.ui.editor.ArcumEditorContributor"/>
+  </extension>
+
+  <!--///////////////////////////////////////////-->
+  <!-- Map Visualization and Transformation view -->
+  <!--///////////////////////////////////////////-->
+  <extension point="org.eclipse.ui.views">
+     <category
+       id="arcumViewCategory"
+       name="Arcum Concept Framework"/>
+     <view
+       allowMultiple="false"
+       category="arcumViewCategory"
+       class="edu.ucsd.arcum.ui.views.FragmentsView"
+       icon="icons/arcumview.gif"
+       id="edu.ucsd.arcum.ui.views.MapVisualizationAndTransformationView"
+       name="Fragments"/>
+  </extension>
+
+  <!--/////////////////-->
+  <!-- Problem markers -->
+  <!--/////////////////-->
+  <extension
+    point="org.eclipse.core.resources.markers"
+    id="arcumMarker"
+    name="Arcum Problem Marker">
+    <super type="org.eclipse.core.resources.problemmarker"/>
+    <super type="org.eclipse.core.resources.textmarker"/>
+    <persistent value="true"/>
+  </extension>
+</plugin>

@@ -1,0 +1,92 @@
+// Note: isViaEdge and isBypassEdge arguments have been removed, for simplicity
+interface VisitorPattern {
+	VisitorPattern(
+		String traversalName,
+		Type rootType,
+		targetType(Type type));
+
+	visit(Expr root, Expr target, Expr visitor)
+	require
+		isAssignableFrom(rootType, TypeOf(target))
+		&& forAll (Type type) {
+			targetType(type) =>
+			exists (Method m) {
+				hasMethod(TypeOf(visitor), m) &&
+				SignatureOf(m) == [public boolean visit(`type)]
+			}
+			catch error("The visitor must have a method for visiting %s instances",
+				target)
+		}
+		catch quickFix("Insert required methods");
+
+	// Note: For simplicity, this implementation doesn't support arrays or
+	// collections of nodes, only direct edges
+	realize static classGraph(Type fromType, Type toType, Field edge) with
+		((fromType == rootType) || classGraph(_, fromType, _))
+		&& hasField(fromType, edge)
+		&& toType == TypeOf(edge);
+
+	realize static traversalEdge(Field edge) with
+		classGraph(_, _, edge)
+		&& let Type t : t == TypeOf(edge) in
+			(targetType(t) || ownerOfTraversalEdge(t));
+
+	realize static ownerOfTraversalEdge(Type owner) with
+		let Field f : traversalEdge(f) in classGraph(owner, _, f);
+	
+	// Not shown: a predicate for stating if an edge has a cycle risk
+}
+
+option GangOfFourVisitor implements VisitorConcept {
+	GangOfFourVisitor(Name interfaceName, super...);
+	
+	realize Interface visitorIntf with
+		let Set signatures = visitMethodSignatures(signatures) in
+		visitorIntf == [interface `interfaceName { `signatures }];
+
+	realize acceptMethods(Method acceptMethod) with
+		let Type type : classGraph(type, _, _) in
+		let Set stmts : bodyStatement(type, stmts) in
+		acceptMethod ==
+			[public void `traversalName(`interfaceName visitor) { `stmts }]
+		&& hasMethod(type, acceptMethod);
+	
+	// An implementation that supported arrays and collections would have for-loops
+	// with the call to accept in its body
+	// Also not shown: An implementation that marks all visited edges	
+	realize static bodyStatement(Type type, Statement stmt) with
+		let Field edge: classGraph(type, _, edge)
+		&& stmt == [`edge.accept(visitor)];
+
+	realize static visitMethodSignatures(Signature sig) with
+		let Type type : targetType(type) in
+		sig == [public boolean visit(`type obj)];
+
+	realize visit(Expr root, Expr target, Expr visitor) with
+		root == [`target.accept(`visitor)];
+}
+
+
+
+
+
+option DJLibrary implements VisitorConcept {
+	singleton parameters(
+		Type strategyOwner default rootType);
+
+	realize Field strategy, Expr initExpr with
+		strategy == [public static final Strategy `traversalName = `initExpr]
+		&& initExpr == [Strategy.from(`root).to(`targetType)]
+		&& hasField(strategyOwner, strategy);
+
+	realize visit(Expr root, Expr target, Expr visitor) with
+		expr == [`strategy.traverse(`target, `visitor)];
+}
+
+require {
+	GangOfFourVisitor(
+		traversalName: "visitDocuments",
+		rootType: Library,
+		targetType(type): type == ([Book] || [Paper]),
+		interfaceName: edu.ucsd.mshonle.BookVisitor);
+}
