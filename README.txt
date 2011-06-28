@@ -3,6 +3,7 @@ Arcum Concept Framework
 Arcum is a plug-in for Eclipse to let you define your own refactorings.
 
 This plug-in depends on google-collect-snapshot-20071022.jar and guice-1.0.jar.
+But these dependencies will soon go away. :-)
 
 For more information on Arcum, read:
   Macneil Shonle, William G. Griswold, and Sorin Lerner. Beyond refactoring: a
